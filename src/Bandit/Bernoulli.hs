@@ -1,27 +1,77 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE StrictData #-}
+
 module Bandit.Bernoulli
   (newSequentialMean,
    newBanditTS,
    newBanditGreedy,
+   newBanditRandom,
+   newMixedBandit,
+   newBanditEpsilonGreedy,
+   MixedBandit,
    BernoulliBanditGreedy,
+   BernoulliBanditRandom,
    BernoulliBanditTS) where
 
 
 import Control.Monad
 import Data.Random
 import qualified Data.Random.Distribution.Beta as D
+import qualified Data.Random.Distribution.Bernoulli as D
+
+import Data.Random.Source.DevRandom
 
 import Bandit.Types
+
+-- |Selecting an action:
+select :: IO Int
+select = runRVar (selectAction $ newBanditRandom [1, 2, 3]) DevRandom
+
+
+data MixedBandit action reward
+  = forall a b. (BanditAgent a action reward, BanditAgent b action reward)
+  => MixedBandit Double a b
+
+
+newBanditEpsilonGreedy :: Eq action => Double -> [action] -> MixedBandit action Bool
+newBanditEpsilonGreedy p actions
+  = newMixedBandit p (newBanditRandom actions) (newBanditGreedy actions)
+
+
+newMixedBandit :: (BanditAgent a action reward, BanditAgent b action reward)
+               => Double -> a -> b -> MixedBandit action reward
+newMixedBandit p a b = if 0 <= p && p <= 1
+                       then MixedBandit p a b
+                       else error "MixedBandit: probability needs to be between 0 and 1"
+
+
+instance Eq action => BanditAgent (MixedBandit action reward) action reward where
+  selectAction (MixedBandit p a b) = do
+    choice <- D.bernoulli p
+    if choice
+      then selectAction a
+      else selectAction b
+  updateAgent action reward (MixedBandit p a b)
+    = MixedBandit p (updateAgent action reward a) (updateAgent action reward b)
+
 
 data BernoulliBanditRandom action = BernoulliBanditRandom [action]
 
 
-instance Eq action => BanditAgent (BernoulliBanditRandom action) where
-  type Reward (BernoulliBanditRandom action) = Bool
-  type Action (BernoulliBanditRandom action) = action
+newBanditRandom :: Eq action => [action] -> BernoulliBanditRandom action
+newBanditRandom actions
+  = if hasDuplicates actions
+    then error "BernoulliBanditRandom: actions need to be unique"
+    else BernoulliBanditRandom actions
+
+
+instance Eq action => BanditAgent (BernoulliBanditRandom action) action Bool where
   selectAction (BernoulliBanditRandom actions) = randomElement actions
   updateAgent _ _ agent = agent
 
@@ -29,9 +79,7 @@ instance Eq action => BanditAgent (BernoulliBanditRandom action) where
 data BernoulliBanditGreedy action = BernoulliBanditGreedy [(action, SequentialMean)]
 
 
-instance Eq action => BanditAgent (BernoulliBanditGreedy action) where
-  type Reward (BernoulliBanditGreedy action) = Bool
-  type Action (BernoulliBanditGreedy action) = action
+instance Eq action => BanditAgent (BernoulliBanditGreedy action) action Bool where
   selectAction (BernoulliBanditGreedy means) = selectActionGreedy means
   updateAgent action reward (BernoulliBanditGreedy means)
     = BernoulliBanditGreedy $ updateAgentGreedy action reward means
@@ -43,21 +91,23 @@ newBanditGreedy actions
     then error "BernoulliBanditGreedy: actions need to be unique"
     else BernoulliBanditGreedy $ zip actions $ repeat newSequentialMean
 
+
+-- TODO: would be interesting to examine the effect of unboxing the parameters
 data SequentialMean = SequentialMean Int Double
 
 
-instance SequentialEstimator SequentialMean where
-  type Estimate SequentialMean = Double
-  type Observation SequentialMean = Double
-  estimate (SequentialMean _ mu) = mu
-  updateEstimate v (SequentialMean n mu)
+instance SequentialEstimator SequentialMean Double Double where
+  estimate (SequentialMean _ mean) = mean
+  updateEstimate v (SequentialMean n mean)
     = let n' = n + 1
-      in SequentialMean n' (mu + (v - mu) / fromIntegral n')
+      in SequentialMean n' (mean + (v - mean) / fromIntegral n')
 
 
 newSequentialMean :: SequentialMean
 newSequentialMean = SequentialMean 0 0.0
 
+
+-- TODO: break ties by uniform random sampling
 selectActionGreedy :: Eq action
                    => [(action, SequentialMean)] -> RVar action
 selectActionGreedy = pure . fst . foldl1 selectMax . fmap estimateMean
@@ -77,9 +127,7 @@ updateAgentGreedy action reward means = updateMeans action reward `fmap` means
 data BernoulliBanditTS action = BernoulliBanditTS [(action, D.Beta Double)]
 
 
-instance Eq action => BanditAgent (BernoulliBanditTS action) where
-  type Reward (BernoulliBanditTS action) = Bool
-  type Action (BernoulliBanditTS action) = action
+instance Eq action => BanditAgent (BernoulliBanditTS action) action Bool where
   selectAction (BernoulliBanditTS prior)
     = selectActionTS prior
   updateAgent action reward (BernoulliBanditTS prior)

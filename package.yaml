@@ -27,6 +27,7 @@ dependencies:
 - base >= 4.7 && < 5
 - free
 - random-fu
+- random-source
 - mtl
 - exceptions
 - random

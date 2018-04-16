@@ -1,17 +1,15 @@
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 module Bandit.Types where
 
 import Data.Random
 
-class BanditAgent agent where
-  type Reward agent
-  type Action agent
-  selectAction :: agent -> RVar (Action agent)
-  updateAgent :: Action agent -> Reward agent -> agent -> agent
+class BanditAgent agent action reward | agent -> action reward where
+  selectAction :: agent -> RVar action
+  updateAgent :: action -> reward -> agent -> agent
 
 
-class SequentialEstimator estimator where
-  type Estimate estimator
-  type Observation estimator
-  estimate :: estimator -> Estimate estimator
-  updateEstimate :: Observation estimator -> estimator -> estimator
+class SequentialEstimator estimator est obs | estimator -> est obs where
+  estimate :: estimator -> est
+  updateEstimate :: obs -> estimator -> estimator
