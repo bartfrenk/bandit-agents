@@ -6,6 +6,10 @@ author:              "Author name here"
 maintainer:          "example@example.com"
 copyright:           "2018 Author name here"
 
+default-extensions:
+- OverloadedStrings
+- DeriveFunctor
+
 extra-source-files:
 - README.md
 - ChangeLog.md
@@ -21,6 +25,12 @@ description:         Please see the README on Github at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- free
+- random-fu
+- mtl
+- exceptions
+- random
+- containers
 
 library:
   source-dirs: src
