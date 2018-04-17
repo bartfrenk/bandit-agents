@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE RecordWildCards       #-}
 
 module Bandit.Linear where
 
@@ -12,18 +14,22 @@ import           Numeric.LinearAlgebra.HMatrix
 import           Bandit.Types
 import           Bandit.Utils
 
-data LinearCtxBanditTS actions =
-  LinearCtxBanditTS [(actions, Normal (Vector Double))]
-
 type Ctx = Vector Double
 
-instance Eq act => CtxBanditAgent (LinearCtxBanditTS act) Ctx act Double where
-  selectActionFromCtx (LinearCtxBanditTS prior) ctx =
-    selectActionFromCtxTS prior ctx
-  updateAgentWithCtx ctx act reward agent = undefined
+type Prior actions = [(actions, Normal (Vector Double))]
 
-selectActionFromCtxTS ::
-     Eq act => [(act, Normal (Vector Double))] -> Vector Double -> RVar act
+data LinearCtxBanditTS actions = LinearCtxBanditTS
+  { beta  :: Double
+  , prior :: Prior actions
+  }
+
+instance Eq act => CtxBanditAgent (LinearCtxBanditTS act) Ctx act Double where
+  selectActionFromCtx LinearCtxBanditTS {prior} ctx =
+    selectActionFromCtxTS prior ctx
+  updateAgentWithCtx ctx act reward LinearCtxBanditTS {..} =
+    LinearCtxBanditTS beta $ updateAgentWithCtxTS beta ctx act reward prior
+
+selectActionFromCtxTS :: Eq act => Prior act -> Ctx -> RVar act
 selectActionFromCtxTS prior ctx = do
   scores <- forM prior sampleScores
   selectMax scores
@@ -32,4 +38,14 @@ selectActionFromCtxTS prior ctx = do
       weights <- rvar dist
       pure (action, ctx <.> weights)
 
-
+updateAgentWithCtxTS ::
+     Eq act => Double -> Ctx -> act -> Double -> Prior act -> Prior act
+updateAgentWithCtxTS beta ctx act reward prior = updatePrior `fmap` prior
+  where
+    updatePrior (a, pr@(Normal mu sigma)) =
+      if act == a
+        then let lambda = inv $ unSym sigma
+                 sigma' = lambda + scalar beta * outer ctx ctx
+                 mu' = sigma' #> (lambda #> mu + scalar (beta * reward) * ctx)
+             in (a, Normal mu' (sym sigma'))
+        else (a, pr)

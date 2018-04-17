@@ -9,6 +9,8 @@ copyright:           "2018 Author name here"
 default-extensions:
 - OverloadedStrings
 - DeriveFunctor
+- RecordWildCards
+- NamedFieldPuns
 
 extra-source-files:
 - README.md

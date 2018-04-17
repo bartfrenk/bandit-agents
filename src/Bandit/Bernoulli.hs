@@ -37,7 +37,6 @@ newBanditEpsilonGreedy p actions
   = newMixedBandit p (newBanditRandom actions) (newBanditGreedy actions)
 
 
-
 newBanditRandom :: Eq action => [action] -> BernoulliBanditRandom action
 newBanditRandom actions
   = if hasDuplicates actions
