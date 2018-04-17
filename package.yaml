@@ -1,4 +1,4 @@
-name: hs-bandit
+name: bandit-agents
 version: 0.1.0.0
 github: "bartfrenk/hs-bandit"
 license: BSD3
