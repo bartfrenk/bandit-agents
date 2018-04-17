@@ -23,45 +23,19 @@ module Bandit.Bernoulli
 import Control.Monad
 import Data.Random
 import qualified Data.Random.Distribution.Beta as D
-import qualified Data.Random.Distribution.Bernoulli as D
 
-import Data.Random.Source.DevRandom
-
+import Bandit.Utils (selectMax)
 import Bandit.Types
-
--- |Selecting an action:
-select :: IO Int
-select = runRVar (selectAction $ newBanditRandom [1, 2, 3]) DevRandom
+import Bandit.Combinators
 
 
-data MixedBandit action reward
-  = forall a b. (BanditAgent a action reward, BanditAgent b action reward)
-  => MixedBandit Double a b
+data BernoulliBanditRandom action = BernoulliBanditRandom [action]
 
 
 newBanditEpsilonGreedy :: Eq action => Double -> [action] -> MixedBandit action Bool
 newBanditEpsilonGreedy p actions
   = newMixedBandit p (newBanditRandom actions) (newBanditGreedy actions)
 
-
-newMixedBandit :: (BanditAgent a action reward, BanditAgent b action reward)
-               => Double -> a -> b -> MixedBandit action reward
-newMixedBandit p a b = if 0 <= p && p <= 1
-                       then MixedBandit p a b
-                       else error "MixedBandit: probability needs to be between 0 and 1"
-
-
-instance Eq action => BanditAgent (MixedBandit action reward) action reward where
-  selectAction (MixedBandit p a b) = do
-    choice <- D.bernoulli p
-    if choice
-      then selectAction a
-      else selectAction b
-  updateAgent action reward (MixedBandit p a b)
-    = MixedBandit p (updateAgent action reward a) (updateAgent action reward b)
-
-
-data BernoulliBanditRandom action = BernoulliBanditRandom [action]
 
 
 newBanditRandom :: Eq action => [action] -> BernoulliBanditRandom action
@@ -110,7 +84,7 @@ newSequentialMean = SequentialMean 0 0.0
 -- TODO: break ties by uniform random sampling
 selectActionGreedy :: Eq action
                    => [(action, SequentialMean)] -> RVar action
-selectActionGreedy = pure . fst . foldl1 selectMax . fmap estimateMean
+selectActionGreedy = selectMax . fmap estimateMean
   where
     estimateMean (action, mean) = (action, estimate mean)
 
@@ -134,18 +108,11 @@ instance Eq action => BanditAgent (BernoulliBanditTS action) action Bool where
     = BernoulliBanditTS $ updateAgentTS action reward prior
 
 
-selectMax :: Ord b => (a, b) -> (a, b) -> (a, b)
-selectMax (selected, maxVariate) (action, variate) =
-    if variate > maxVariate
-    then (action, variate)
-    else (selected, maxVariate)
-
-
 selectActionTS :: (Ord v, Distribution D.Beta v)
               => [(action, D.Beta v)] -> RVar action
 selectActionTS prior = do
-  variates <- forM prior $ sampleMarginal
-  pure $ fst $ foldl1 selectMax variates
+  scores <- forM prior sampleMarginal
+  selectMax scores
   where sampleMarginal (action, marginal) = do
           variate <- rvar marginal
           pure (action, variate)

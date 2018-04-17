@@ -13,3 +13,8 @@ class BanditAgent agent action reward | agent -> action reward where
 class SequentialEstimator estimator est obs | estimator -> est obs where
   estimate :: estimator -> est
   updateEstimate :: obs -> estimator -> estimator
+
+
+class CtxBanditAgent agent ctx action reward | agent -> ctx action reward where
+  selectActionFromCtx :: agent -> ctx -> RVar action
+  updateAgentWithCtx :: ctx -> action -> reward -> agent -> agent
