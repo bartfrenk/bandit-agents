@@ -1,10 +1,10 @@
-name:                hs-bandit
-version:             0.1.0.0
-github:              "githubuser/hs-bandit"
-license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2018 Author name here"
+name: hs-bandit
+version: 0.1.0.0
+github: "bartfrenk/hs-bandit"
+license: BSD3
+author: "Bart Frenk"
+maintainer: "bart.frenk@gmail.com"
+copyright: "2018 Bart Frenk"
 
 default-extensions:
 - OverloadedStrings
@@ -14,52 +14,34 @@ default-extensions:
 
 extra-source-files:
 - README.md
-- ChangeLog.md
 
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
+synopsis: >-
+  A collection of algorithms for multi-armed bandit problems.
+category: Data Science
 
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on Github at <https://github.com/githubuser/hs-bandit#readme>
+description: >-
+  Please see the README on Github at
+  <https://github.com/githubuser/hs-bandit#readme>
 
 dependencies:
 - base >= 4.7 && < 5
-- free
 - random-fu
-- random-fu-multivariate
-- hmatrix
-- mtl
-- exceptions
-- random
-- containers
-- random-source # for debugging
-- Chart
-- Chart-diagrams
+- random-source # only to be able to run tests in the REPL
 
 library:
   source-dirs: src
-
-executables:
-  hs-bandit-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - hs-bandit
+  dependencies:
+    - random-fu-multivariate
+    - hmatrix
+    - mtl
 
 tests:
   hs-bandit-test:
-    main:                Spec.hs
-    source-dirs:         test
+    main: Spec.hs
+    source-dirs: test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - hs-bandit
+      - hs-bandit

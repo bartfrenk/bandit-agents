@@ -1,1 +1,3 @@
-# hs-bandit
+# Bandit
+
+Collection of multi-armed bandit algorithms.
