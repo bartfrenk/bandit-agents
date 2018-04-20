@@ -1,0 +1,49 @@
+#+TITLE: Project file for bandit-agent
+#+AUTHOR: Bart Frenk
+#+EMAIL: bart.frenk@gmail.com
+
+* Contents
+
+** Roadmap
+
+*** TODO Implement LogisticBanditTS
+*** TODO Implement LogisticBanditFMTS
+*** TODO Document LinearBanditTS
+Need to reference Bishop.
+*** TODO Do performance testing
+Would be good to have this before experimenting with batch updates.
+
+** Ideas
+
+*** Reconsider the BanditAgent class
+I think we need three functions:
+- selecting an action
+- updating the agent with a batch of outcomes
+- updating the agent with a single outcome
+
+The last one is the least important.
+
+
+**** Options
+It seems best to split the interfaces.
+
+***** Keep a single interface
+Cons:
+- The context and the batched context might not have related types, e.g., think
+  of when the context is of type =Vector Double=, while the batched context is
+  of type =Matrix Double=, for performance reasons. So, this might not work even
+  when we drop the requirement to update with a single outcome.
+Pros:
+- They belong together conceptually; this is a very weak reason.
+- Less classes to keep track of.
+***** Split the interface
+Cons:
+- More classes to keep track of.
+Pros:
+- Update and selection will hardly ever be used in the same program. So our
+  types can be more restrictive.
+- Easy to have multiple update interfaces, without type parameters getting out
+  of hand.
+
+
+
