@@ -12,6 +12,7 @@
 Need to reference Bishop.
 *** TODO Do performance testing
 Would be good to have this before experimenting with batch updates.
+*** TODO Add tests
 
 ** Ideas
 
