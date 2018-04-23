@@ -18,6 +18,6 @@ Administration for the project is kept in a separate org-mode document:
    sampling*. Advances in neural information processing
    systems. 2011. https://papers.nips.cc/paper/4321-an-empirical-evaluation-of-thompson-sampling
 3. Daniel Russo, Benjamin Van, Abbas Kazerouni, Ian Osband. *A tutorial on
-   Thompson sampling*. Computing Research
-   Repository. 2017. http://arxiv.org/abs/1707.02038
+   Thompson sampling*. Computing research
+   repository. 2017. http://arxiv.org/abs/1707.02038
 
