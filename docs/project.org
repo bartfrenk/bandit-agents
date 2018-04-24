@@ -9,9 +9,10 @@
 *** TODO Implement LogisticBanditTS
 *** TODO Implement LogisticBanditFMTS
 *** TODO Document LinearBanditTS
-*** TODO Write docs about multi-armed bandit problems
-    Make this understandable to lay people.
 Need to reference Bishop.
+*** TODO Write docs about multi-armed bandit problems
+Make this understandable to lay people.
+
 *** TODO Do performance testing
 Would be good to have this before experimenting with batch updates.
 *** TODO Add tests
