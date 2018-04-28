@@ -2,10 +2,32 @@
 #+AUTHOR: Bart Frenk
 #+EMAIL: bart.frenk@gmail.com
 
+#+LATEX_HEADER: \usepackage{amsmath}
+#+LATEX_HEADER: \usepackage{paralist}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc}
+#+LATEX_HEADER: \usepackage{palatino}
+#+LATEX_HEADER: \usepackage{euler}
+#+LATEX_HEADER: \usepackage{setspace}
+#+LATEX_HEADER: \renewcommand{\em}[1]{\textbf{#1}}
+#+LATEX_HEADER: \newcommand{\E}[1]{\operatorname{\mathbb{E}}[#1]}
+#+LATEX_HEADER: \setstretch{1.1}
+#+LATEX_HEADER: \let\itemize\compactitem
+#+LATEX_HEADER: \let\description\compactdesc
+#+LATEX_HEADER: \let\enumerate\compactenum
+#+LATEX_HEADER: \setlength{\parindent}{0em}
+#+LATEX_HEADER: \setlength{\parskip}{1em}
+#+LATEX_HEADER: \newcommand{\RR}{\mathbb{R}}
+#+LATEX_HEADER: \newenvironment{exercise}{\textbf{Exercise.}}{}
+#+OPTIONS: toc:nil todo:nil
+
 * Contents
 
 ** Roadmap
+This list is somewhat prioritized.
 
+*** TODO Implement functionality to compute the regret of an experiment
+*** TODO Do performance testing
+Would be good to have this before experimenting with batch updates.
 *** TODO Implement LogisticBanditTS
 *** TODO Implement LogisticBanditFMTS
 *** DONE Document LinearBanditTS
@@ -14,13 +36,24 @@ Need to reference Bishop.
 *** TODO Write docs about multi-armed bandit problems
 Make this understandable to lay people.
 
-*** TODO Do performance testing
-Would be good to have this before experimenting with batch updates.
 *** TODO Add tests
 
 ** Ideas
 
-*** Reconsider the BanditAgent class
+*** Implement 'naive Bayes bandit'
+The basic idea is that the relation between the reward $y_{\alpha}$ for action
+$\alpha$, and the context $x_1, \ldots, x_n$ factors as follows:
+
+\[
+p(y_{\alpha} \mid x_1, \ldots, x_n) \propto p(y_{\alpha}) p(x_1 \mid y_{\alpha}) \ldots p(x_n \mid \alpha).
+\]
+
+It is clear how to do action selection, but not how to update the belief of the agent.
+
+*** DONE Reconsider the BanditAgent class
+CLOSED: [2018-04-29 Sun 00:38]
+relected *Add an extra class for batch updates*.
+
 I think we need three functions:
 - selecting an action
 - updating the agent with a batch of outcomes
@@ -49,6 +82,10 @@ Pros:
   types can be more restrictive.
 - Easy to have multiple update interfaces, without type parameters getting out
   of hand.
-
-
-
+***** Add an extra class for batch updates
+Keep the existing BanditAgent class, and add a class to deal with batch updates.
+Cons:
+- None that I can think of.
+Pros:
+- Can keep the BanditAgent class a conceptual whole
+- Can have multiple formats for the batches to update the agent's belief with.
