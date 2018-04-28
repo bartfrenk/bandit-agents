@@ -52,7 +52,7 @@ It is clear how to do action selection, but not how to update the belief of the 
 
 *** DONE Reconsider the BanditAgent class
 CLOSED: [2018-04-29 Sun 00:38]
-relected *Add an extra class for batch updates*.
+Selected *Add an extra class for batch updates*.
 
 I think we need three functions:
 - selecting an action
