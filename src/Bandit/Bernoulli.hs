@@ -10,6 +10,7 @@
 module Bandit.Bernoulli
   (newSequentialMean,
    newBanditTS,
+   newBanditNI,
    newBanditGreedy,
    newBanditRandom,
    newMixedBandit,
@@ -49,7 +50,8 @@ instance Eq act => BanditAgent (BernoulliBanditRandom act) () act Bool where
   updateBelief _ctx _act _rew agent = agent
 
 
-data BernoulliBanditGreedy action = BernoulliBanditGreedy [(action, SequentialMean)]
+data BernoulliBanditGreedy action = BernoulliBanditGreedy
+  [(action, SequentialMean)] deriving (Show)
 
 
 instance Eq act => BanditAgent (BernoulliBanditGreedy act) () act Bool where
@@ -66,7 +68,7 @@ newBanditGreedy actions
 
 
 -- TODO: would be interesting to examine the effect of unboxing the parameters
-data SequentialMean = SequentialMean Int Double
+data SequentialMean = SequentialMean Int Double deriving (Show)
 
 
 instance SequentialEstimator SequentialMean Double Double where
@@ -97,7 +99,12 @@ updateAgentGreedy action reward means = updateMeans action reward `fmap` means
           else (a, mean)
 
 -- |Agent for a Bernoulli bandit problem that selects actions by Thompson sampling.
-data BernoulliBanditTS action = BernoulliBanditTS [(action, D.Beta Double)]
+data BernoulliBanditTS action = BernoulliBanditTS
+  [(action, D.Beta Double)]
+
+instance Show act => Show (BernoulliBanditTS act) where
+  show (BernoulliBanditTS prior) = show $ f `fmap` prior
+    where f (action, (D.Beta a b)) = (action, (a, b))
 
 
 instance Eq act => BanditAgent (BernoulliBanditTS act) () act Bool where
@@ -125,7 +132,7 @@ updateAgentTS action reward prior =
           then (selected, if r
                           then D.Beta (alpha + 1.0) beta
                           else D.Beta alpha (beta + 1.0))
-          else (action, marginal)
+          else (a, marginal)
 
 
 -- |Creates a new Bernoulli Bandit from a conjugate prior. Fails with an error
@@ -134,6 +141,11 @@ newBanditTS :: Eq action => [(action, D.Beta Double)] -> BernoulliBanditTS actio
 newBanditTS prior = if hasDuplicates (fst `fmap` prior)
                   then error "BernoulliBanditTS: actions need to be unique"
                   else BernoulliBanditTS prior
+
+-- |Creates a new Bernoulli Bandit from a set of actions. The priors are
+-- non-informative Beta distributions.
+newBanditNI :: Eq action => [action] -> BernoulliBanditTS action
+newBanditNI acts = newBanditTS $ zip acts (repeat $ D.Beta 1.0 1.0)
 
 
 -- |Returns whether the list contains duplicates. Note that the complexity is

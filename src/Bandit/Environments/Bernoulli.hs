@@ -10,6 +10,9 @@ import Data.Random.Distribution.Bernoulli
 import Bandit.Environments.Types
 
 
+newBernoulliEnv :: Ord act => [(act, Double)] -> BernoulliEnv act
+newBernoulliEnv = BernoulliEnv . Map.fromList
+
 data BernoulliEnv act = BernoulliEnv
   { expectedRewards :: Map act Double
   }
