@@ -32,7 +32,7 @@ import Bandit.Combinators
 data BernoulliBanditRandom action = BernoulliBanditRandom [action]
 
 
-newBanditEpsilonGreedy :: Eq action => Double -> [action] -> MixedBandit action Bool
+newBanditEpsilonGreedy :: Eq act => Double -> [act] -> MixedBandit () act Bool
 newBanditEpsilonGreedy p actions
   = newMixedBandit p (newBanditRandom actions) (newBanditGreedy actions)
 
@@ -44,18 +44,18 @@ newBanditRandom actions
     else BernoulliBanditRandom actions
 
 
-instance Eq action => BanditAgent (BernoulliBanditRandom action) action Bool where
-  selectAction (BernoulliBanditRandom actions) = randomElement actions
-  updateAgent _ _ agent = agent
+instance Eq act => BanditAgent (BernoulliBanditRandom act) () act Bool where
+  selectAction (BernoulliBanditRandom acts) _ctx = randomElement acts
+  updateBelief _ctx _act _rew agent = agent
 
 
 data BernoulliBanditGreedy action = BernoulliBanditGreedy [(action, SequentialMean)]
 
 
-instance Eq action => BanditAgent (BernoulliBanditGreedy action) action Bool where
-  selectAction (BernoulliBanditGreedy means) = selectActionGreedy means
-  updateAgent action reward (BernoulliBanditGreedy means)
-    = BernoulliBanditGreedy $ updateAgentGreedy action reward means
+instance Eq act => BanditAgent (BernoulliBanditGreedy act) () act Bool where
+  selectAction (BernoulliBanditGreedy means) _ctx = selectActionGreedy means
+  updateBelief _ctx act rew (BernoulliBanditGreedy means)
+    = BernoulliBanditGreedy $ updateAgentGreedy act rew means
 
 
 newBanditGreedy :: Eq action => [action] -> BernoulliBanditGreedy action
@@ -100,11 +100,11 @@ updateAgentGreedy action reward means = updateMeans action reward `fmap` means
 data BernoulliBanditTS action = BernoulliBanditTS [(action, D.Beta Double)]
 
 
-instance Eq action => BanditAgent (BernoulliBanditTS action) action Bool where
-  selectAction (BernoulliBanditTS prior)
+instance Eq act => BanditAgent (BernoulliBanditTS act) () act Bool where
+  selectAction (BernoulliBanditTS prior) _ctx
     = selectActionTS prior
-  updateAgent action reward (BernoulliBanditTS prior)
-    = BernoulliBanditTS $ updateAgentTS action reward prior
+  updateBelief _ctx act rew (BernoulliBanditTS prior)
+    = BernoulliBanditTS $ updateAgentTS act rew prior
 
 
 selectActionTS :: (Ord v, Distribution D.Beta v)

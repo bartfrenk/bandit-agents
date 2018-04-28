@@ -8,7 +8,8 @@
 
 *** TODO Implement LogisticBanditTS
 *** TODO Implement LogisticBanditFMTS
-*** TODO Document LinearBanditTS
+*** DONE Document LinearBanditTS
+CLOSED: [2018-04-26 Thu 14:36]
 Need to reference Bishop.
 *** TODO Write docs about multi-armed bandit problems
 Make this understandable to lay people.
