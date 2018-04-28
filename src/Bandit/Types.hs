@@ -3,9 +3,9 @@
 {-# LANGUAGE FunctionalDependencies #-}
 module Bandit.Types where
 
-import Data.Random
+import Data.Random (RVar)
 
-class BanditAgent agent ctx act rew | agent -> act rew where
+class BanditAgent agent ctx act rew | agent -> act ctx rew where
   selectAction :: agent -> ctx -> RVar act
   updateBelief :: ctx -> act -> rew -> agent -> agent
 
