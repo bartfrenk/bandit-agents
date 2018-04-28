@@ -27,6 +27,7 @@ dependencies:
 - base >= 4.7 && < 5
 - random-fu
 - random-source # only to be able to run tests in the REPL
+- containers
 
 library:
   source-dirs: src
