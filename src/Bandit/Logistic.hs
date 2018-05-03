@@ -1,13 +1,13 @@
 module Bandit.Logistic where
 
-import           Numeric.LinearAlgebra.HMatrix
+-- import           Numeric.LinearAlgebra.HMatrix
 
-type Prior actions = [(actions, Normal (Vector Double))]
+-- type Prior actions = [(actions, Normal (Vector Double))]
 
-type Ctx = Vector Double
+-- type Ctx = Vector Double
 
-data LogisticBanditTS action = LogisticBanditTS
-  { prior :: Prior actions }
+-- data LogisticBanditTS action = LogisticBanditTS
+--   { prior :: Prior actions }
 
 
 {-- Implements the logistic regression model from [Chapelle, Li, 2011], described
@@ -22,9 +22,9 @@ the posterior). It approximates the posterior by its Laplace approximation, at
 each step.
 --}
 
-instance Eq act => (LogisticBanditTS act) Ctx act Bool where
-  selectActionFromCtx = undefined
-  updateActionWithCtx = undefined
+-- instance Eq act => (LogisticBanditTS act) Ctx act Bool where
+--   selectActionFromCtx = undefined
+--   updateActionWithCtx = undefined
 
 
 {-- Implements the logistic regression model from [Chapelle, Li, 2011], described
@@ -35,8 +35,8 @@ a single logistic regression model in the state.
 
 The update action uses the same approximation techniques as `LogisticBanditTS`.
 --}
-type FM action = action -> Vector Double
+-- type FM action = action -> Vector Double
 
-data LogisticBanditFMTS action (FM action) = LogisticBanditFMTS where
-  selectActionFromCtx = undefined
-  updateActionWithCtx = undefined
+-- data LogisticBanditFMTS action (FM action) = LogisticBanditFMTS where
+--   selectActionFromCtx = undefined
+--   updateActionWithCtx = undefined
