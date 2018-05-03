@@ -28,6 +28,8 @@ dependencies:
 - random-fu
 - random-source # only to be able to run tests in the REPL
 - containers
+- Chart
+- Chart-cairo
 
 library:
   source-dirs: src

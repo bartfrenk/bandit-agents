@@ -33,7 +33,7 @@ import Bandit.Combinators
 data BernoulliBanditRandom action = BernoulliBanditRandom [action]
 
 
-newBanditEpsilonGreedy :: Eq act => Double -> [act] -> MixedBandit () act Bool
+newBanditEpsilonGreedy :: Eq act => Double -> [act] -> MixedBandit () act Double
 newBanditEpsilonGreedy p actions
   = newMixedBandit p (newBanditRandom actions) (newBanditGreedy actions)
 
@@ -45,7 +45,7 @@ newBanditRandom actions
     else BernoulliBanditRandom actions
 
 
-instance Eq act => BanditAgent (BernoulliBanditRandom act) () act Bool where
+instance Eq act => BanditAgent (BernoulliBanditRandom act) () act Double where
   selectAction (BernoulliBanditRandom acts) _ctx = randomElement acts
   updateBelief _ctx _act _rew agent = agent
 
@@ -54,7 +54,7 @@ data BernoulliBanditGreedy action = BernoulliBanditGreedy
   [(action, SequentialMean)] deriving (Show)
 
 
-instance Eq act => BanditAgent (BernoulliBanditGreedy act) () act Bool where
+instance Eq act => BanditAgent (BernoulliBanditGreedy act) () act Double where
   selectAction (BernoulliBanditGreedy means) _ctx = selectActionGreedy means
   updateBelief _ctx act rew (BernoulliBanditGreedy means)
     = BernoulliBanditGreedy $ updateAgentGreedy act rew means
@@ -91,11 +91,11 @@ selectActionGreedy = selectMax . fmap estimateMean
 
 
 updateAgentGreedy :: Eq action
-                  => action -> Bool -> [(action, SequentialMean)] -> [(action, SequentialMean)]
+                  => action -> Double -> [(action, SequentialMean)] -> [(action, SequentialMean)]
 updateAgentGreedy action reward means = updateMeans action reward `fmap` means
   where updateMeans selected r (a, mean) =
           if selected == a
-          then (selected, updateEstimate (if r then 1.0 else 0.0) mean)
+          then (selected, updateEstimate r mean)
           else (a, mean)
 
 -- |Agent for a Bernoulli bandit problem that selects actions by Thompson sampling.
@@ -107,7 +107,7 @@ instance Show act => Show (BernoulliBanditTS act) where
     where f (action, (D.Beta a b)) = (action, (a, b))
 
 
-instance Eq act => BanditAgent (BernoulliBanditTS act) () act Bool where
+instance Eq act => BanditAgent (BernoulliBanditTS act) () act Double where
   selectAction (BernoulliBanditTS prior) _ctx
     = selectActionTS prior
   updateBelief _ctx act rew (BernoulliBanditTS prior)
@@ -124,12 +124,12 @@ selectActionTS prior = do
           pure (action, variate)
 
 updateAgentTS :: Eq action
-             => action -> Bool -> [(action, D.Beta Double)] ->  [(action, D.Beta Double)]
+             => action -> Double -> [(action, D.Beta Double)] ->  [(action, D.Beta Double)]
 updateAgentTS action reward prior =
   updateMarginal action reward `fmap` prior
   where updateMarginal selected r (a, marginal@(D.Beta alpha beta)) =
           if selected == a
-          then (selected, if r
+          then (selected, if r == 1.0
                           then D.Beta (alpha + 1.0) beta
                           else D.Beta alpha (beta + 1.0))
           else (a, marginal)
