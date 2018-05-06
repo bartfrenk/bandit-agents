@@ -36,6 +36,7 @@ library:
   dependencies:
     - random-fu-multivariate
     - hmatrix
+    - hmatrix-gsl
     - mtl
 
 tests:
