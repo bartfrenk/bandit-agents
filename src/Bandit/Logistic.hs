@@ -9,8 +9,11 @@ import           Data.Random.Distribution.MultivariateNormal
 import           Numeric.GSL.Minimization
 import           Numeric.LinearAlgebra.HMatrix
 
-type Ctx = Vector Double
+import Debug.Trace
+import           Graphics.Rendering.Chart.Backend.Cairo
+import           Graphics.Rendering.Chart.Easy hiding (Vector, Matrix, (<.>), (??), (|>))
 
+type Ctx = Vector Double
 data LogisticBanditTS act = LogisticBanditTS
   { prior :: Map act (Normal (Vector Double))
   }
@@ -46,10 +49,10 @@ testMinimize = fst $ uniMinimize GoldenSection 1E-2 50 f 3.0 (-10.0) 10.0
     f :: Double -> Double
     f x = x ** 2
 
-testMinimizeD = minimizeD VectorBFGS2 1E-2 30 0.1 1E-2 fn grad [3.0]
+testMinimizeD = minimizeD VectorBFGS2 1E-2 30 0.1 1E-2 fn grad [1000.0, 1000.0]
   where
-    fn [x] = (x - 10) ** 2
-    grad [x] = [2 * (x - 10)]
+    fn [x, y] = (x - 10) ** 2 + (y - 12) ** 2
+    grad [x, y] = [2 * (x - 10), 2 * (y - 12)]
 
 logPosterior' ::
      Vector Double -- ^ vector of target values, 0, or 1, of length n
@@ -63,7 +66,10 @@ logPosterior' targets ctxs (Normal mean covariance) w =
                                          -- precision with the prior
       regularizer = -0.5 * d <.> (precision #> d)
       activations = 1 / (1 + exp (-(ctxs #> w)))
-      loss = targets <.> activations + (1 - targets) <.> (1 - activations)
+      -- factor to avoid -Infinity appearing in the expression
+      loss = targets <.> (log (max activations tol)) +
+             (1 - targets) <.> (log (max (1 - activations) tol))
+      tol = size activations |> repeat 1e-30
   in loss + regularizer
 
 
@@ -84,7 +90,7 @@ gradLogPosterior' targets ctxs (Normal mean covariance) w =
       precision = inv $ unSym covariance
       regularizer = -precision #> d
       activations = 1 / (1 + exp (-(ctxs #> w)))
-      coeffs = targets * activations + (1 - targets) * activations
+      coeffs = targets * (1 - activations) - (1 - targets) * activations
       loss = coeffs <# ctxs
   in loss + regularizer
 
@@ -108,12 +114,20 @@ ctxDimension Batch{ctxs} = cols ctxs
 
 posteriorMode :: Normal (Vector Double) -> Batch -> (Vector Double, Matrix Double)
 posteriorMode prior batch =
-  minimizeVD VectorBFGS2 1E-2 30 0.1 0.1 fn grad startingPoint
-  where fn = logPosterior prior batch
-        grad = gradLogPosterior prior batch
+  minimizeVD VectorBFGS2 1E-2 10 0.1 1E-2 fn grad startingPoint
+  where fn = negate . (logPosterior prior batch)
+        grad = negate . (gradLogPosterior prior batch)
         n = ctxDimension batch
+  --      searchBox = fromList (take n $ repeat 1.0)
         startingPoint = fromList (take n $ repeat 0.0)
 
+
+posteriorCovariance prior@(Normal mean covariance) batch@Batch{..} =
+  let w = fst $ posteriorMode prior batch
+      activations = 1 / (1 + exp(-(ctxs #> w)))
+      coeffs = activations * (1 - activations)
+      ctxRows = toRows ctxs
+  in undefined
 
 randomBatch :: RVar (Vector Double) -> Vector Double -> Int -> RVar Batch
 randomBatch randomCtx w n = do
@@ -130,12 +144,17 @@ randomPoint randomCtx w = do
   pure (ctx, target)
 
 randomContext :: Int -> RVar (Vector Double)
-randomContext k = sample $ Normal (fromList $ take k $ repeat 0.0) (sym $ ident k)
+randomContext k = sample $ Normal (fromList $ take k $ repeat 0.0)  (sym $ ident k)
 
-testPosteriorMode :: Int -> Int -> Vector Double
-testPosteriorMode n k =
-  let prior = Normal (fromList $ take k $ repeat 0.0) (sym $ ident k)
-  in undefined
+testPosteriorMode :: Vector Double -> Int -> RVar (Vector Double, Matrix Double)
+testPosteriorMode w n = do
+  let k = size w
+  let prior = Normal (fromList $ take k $ repeat 0.0) (sym $ 1000 * ident k)
+  batch <- randomBatch (randomContext k) w n
+  pure $ (posteriorMode prior batch)
+
+test :: Int -> IO (Vector Double, Matrix Double)
+test n = sample $ testPosteriorMode (vector [1.0, 2.0, 3.0, 4.0]) n
 
 -- testMinizeD = minimizeD VectorBFGS2 1E-2 30 0.1 fn grad startingPoint
 --   where
@@ -145,3 +164,25 @@ testPosteriorMode n k =
 
 h x = x
 
+
+testPlot path w n = do
+  let k = 1
+  let prior = Normal (fromList $ take k $ repeat 0.0) (sym $ ident k)
+  batch <- sample (randomBatch (randomContext k) (vector [w]) n)
+  plotPosterior path prior batch
+
+plotPosterior :: String -> Normal (Vector Double) -> Batch -> IO ()
+plotPosterior path prior batch = do
+  let r = range' (-5.0) 5.0 0.1
+  let fn = logPosterior prior batch
+  -- let fn v = let [x] = toList v
+  --            in x**2
+  let points = r `zip` (fn . toVec <$> r)
+--  putStrLn $ "POINTS: " ++ show (take 2 points)
+  toFile def path $ do
+    plot $ (line "" $ [points])
+  where toVec d = vector [d]
+
+
+range' :: Double -> Double -> Double -> [Double]
+range' start end step = takeWhile (< end) $ iterate (+ step) start
