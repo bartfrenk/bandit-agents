@@ -35,14 +35,6 @@ instance Ord act =>
   expectedReward LogisticEnv {weights} ctx act =
     sigmoid (ctx <.> (weights ! act))
 
-randomPoint ::
-     RVar (Vector Double) -> Vector Double -> RVar (Vector Double, Double)
-randomPoint randomCtx w = do
-  ctx <- randomCtx
-  let p = 1.0 / (1.0 + exp (-ctx <.> w))
-  target <- bernoulli p
-  pure (ctx, target)
-
 randomContext :: Int -> RVar (Vector Double)
 randomContext k =
   sample $ Normal (fromList $ take k $ repeat 0.0) (sym $ ident k)

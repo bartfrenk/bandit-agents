@@ -11,14 +11,18 @@ import           Data.Random                                 hiding (Normal)
 import           Data.Random.Distribution.MultivariateNormal
 import           Numeric.LinearAlgebra.HMatrix
 
-import           Bandit.Types
+import           Bandit.Agents.Types
 import           Bandit.Utils
 
 type Ctx = Vector Double
 
 type Prior actions = [(actions, Normal (Vector Double))]
 
-
+{- | Bandit agent in the environment where the expected reward is a linear
+function of the context, and the errors are normally distributed with precision
+`beta`. The `prior` field maps actions to priors on the linear coefficients for
+the expected reward functions of these actions.
+-}
 data LinearCtxBanditTS actions = LinearCtxBanditTS
   { beta  :: Double
   , prior :: Prior actions

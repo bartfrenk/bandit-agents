@@ -10,6 +10,7 @@ keepMax (selected, maxScore) (action, score) =
     then (action, score)
     else (selected, maxScore)
 
+-- TODO: break ties by uniform random sampling
 selectMax :: Ord b => [(a, b)] -> RVar a
 selectMax scores = pure $ fst $ foldl1 keepMax scores
 
