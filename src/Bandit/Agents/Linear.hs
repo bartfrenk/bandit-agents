@@ -4,7 +4,7 @@
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE RecordWildCards       #-}
 
-module Bandit.Linear where
+module Bandit.Agents.Linear where
 
 import           Control.Monad
 import           Data.Random                                 hiding (Normal)

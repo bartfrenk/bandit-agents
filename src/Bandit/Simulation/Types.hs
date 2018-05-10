@@ -13,7 +13,7 @@ import           Data.Sequence             (Seq)
 import qualified Data.Sequence             as Seq
 
 import           Bandit.Environments.Types
-import           Bandit.Types
+import           Bandit.Agents.Types
 
 newtype Log rew =
   Log (Seq (rew, rew))

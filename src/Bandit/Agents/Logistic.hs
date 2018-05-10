@@ -2,27 +2,18 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards       #-}
 
-module Bandit.Logistic where
+module Bandit.Agents.Logistic where
 
-import           Control.Monad
 import           Data.Map.Strict                             (Map)
 import qualified Data.Map.Strict                             as Map
-import           Data.Random                                 hiding (Normal)
-import           Data.Random.Distribution.Bernoulli
-import           Data.Random.Distribution.MultivariateNormal
-import           Numeric.GSL.Minimization
+import           Data.Random                                 (sample)
+import           Data.Random.Distribution.MultivariateNormal (Normal (..))
+import           Numeric.GSL.Minimization                    (MinimizeMethodD (..),
+                                                              minimizeVD)
 import           Numeric.LinearAlgebra.HMatrix
 
 import           Bandit.Agents.Types
-
-import           Debug.Trace
-import           Graphics.Rendering.Chart.Backend.Cairo
-import           Graphics.Rendering.Chart.Easy               hiding (Matrix,
-                                                              Vector, (<.>),
-                                                              (??), (|>))
-
 import           Bandit.Utils
-
 
 newBanditTS :: Ord act => Int -> [act] -> LogisticBanditTS act
 newBanditTS k acts = LogisticBanditTS $ Map.fromList $ zip acts (repeat prior)
@@ -60,10 +51,10 @@ instance Ord act => BanditAgent (LogisticBanditTS act) Ctx act Double where
 type Ctx = Vector Double
 
 logPosterior' ::
-     Vector Double          -- ^ vector of target values, 0, or 1, of length n
-  -> Matrix Double          -- ^ matrix of contexts, with n columns
+     Vector Double -- ^ vector of target values, 0, or 1, of length n
+  -> Matrix Double -- ^ matrix of contexts, with n columns
   -> Normal (Vector Double) -- ^ the prior
-  -> Vector Double          -- ^ weights of logistic regression
+  -> Vector Double -- ^ weights of logistic regression
   -> Double
 logPosterior' targets ctxs (Normal mean covariance) w =
   let d = w - mean

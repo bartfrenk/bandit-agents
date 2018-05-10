@@ -6,7 +6,7 @@
 {-# LANGUAGE StrictData                #-}
 {-# LANGUAGE TypeFamilies              #-}
 
-module Bandit.Bernoulli
+module Bandit.Agents.Bernoulli
   ( newSequentialMean
   , newBanditTS
   , newBanditNI
