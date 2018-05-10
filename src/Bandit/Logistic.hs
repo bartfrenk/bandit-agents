@@ -1,22 +1,45 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Bandit.Logistic where
 
-
 import Control.Monad
-import           Data.Map.Strict                             (Map)
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 import Data.Random hiding (Normal)
 import Data.Random.Distribution.Bernoulli
-import           Data.Random.Distribution.MultivariateNormal
-import           Numeric.GSL.Minimization
-import           Numeric.LinearAlgebra.HMatrix
+import Data.Random.Distribution.MultivariateNormal
+import Numeric.GSL.Minimization
+import Numeric.LinearAlgebra.HMatrix
+
+import Bandit.Types
 
 import Debug.Trace
-import           Graphics.Rendering.Chart.Backend.Cairo
-import           Graphics.Rendering.Chart.Easy hiding (Vector, Matrix, (<.>), (??), (|>))
+import Graphics.Rendering.Chart.Backend.Cairo
+import Graphics.Rendering.Chart.Easy
+       hiding (Matrix, Vector, (<.>), (??), (|>))
+
+import Bandit.Utils
 
 type Ctx = Vector Double
+
+newBanditTS :: Ord act => Int -> [act] -> LogisticBanditTS act
+newBanditTS k acts = LogisticBanditTS $ Map.fromList $ zip acts (repeat prior)
+  where
+    prior = Normal (k |> repeat 0.0) (sym $ ident k)
+
 data LogisticBanditTS act = LogisticBanditTS
   { prior :: Map act (Normal (Vector Double))
   }
+
+instance Ord act => BanditAgent (LogisticBanditTS act) Ctx act Double where
+  selectAction (LogisticBanditTS prior) ctx = do
+    variates <- mapM sample prior
+    let scores = sigmoid . (ctx <.>) <$> variates
+    selectMaxMap scores
+  updateBelief ctx act rew (LogisticBanditTS prior) =
+    let batch = Batch (vector [rew]) (asRow ctx)
+    in LogisticBanditTS $ Map.adjust (approximatePosterior batch) act prior
 
 {-- Implements the logistic regression model from [Chapelle, Li, 2011], described
 in the 'News article recommendation section', in which each action has its own
@@ -67,18 +90,17 @@ logPosterior' targets ctxs (Normal mean covariance) w =
       regularizer = -0.5 * d <.> (precision #> d)
       activations = 1 / (1 + exp (-(ctxs #> w)))
       -- factor to avoid -Infinity appearing in the expression
-      loss = targets <.> (log (max activations tol)) +
-             (1 - targets) <.> (log (max (1 - activations) tol))
+      loss =
+        targets <.> (log (max activations tol)) +
+        (1 - targets) <.> (log (max (1 - activations) tol))
       tol = size activations |> repeat 1e-30
   in loss + regularizer
-
 
 {--
 Build up the derivative using the following facts:
 1. grad x^T S x = (S + S^T) x
 2. grad \sigma(w^T x) = sigma(w^T x) (1 - sigma(w^T x) x
 --}
-
 gradLogPosterior' ::
      Vector Double
   -> Matrix Double
@@ -95,36 +117,34 @@ gradLogPosterior' targets ctxs (Normal mean covariance) w =
   in loss + regularizer
 
 data Batch = Batch
-  { targets :: Vector Double,
-    ctxs :: Matrix Double
+  { targets :: Vector Double
+  , ctxs :: Matrix Double
   } deriving (Show)
 
-
 logPosterior :: Normal (Vector Double) -> Batch -> Vector Double -> Double
-logPosterior prior Batch{..} =
-  logPosterior' targets ctxs prior
+logPosterior prior Batch {..} = logPosterior' targets ctxs prior
 
-gradLogPosterior :: Normal (Vector Double) -> Batch -> Vector Double -> Vector Double
-gradLogPosterior prior Batch{..} =
-  gradLogPosterior' targets ctxs prior
-
+gradLogPosterior ::
+     Normal (Vector Double) -> Batch -> Vector Double -> Vector Double
+gradLogPosterior prior Batch {..} = gradLogPosterior' targets ctxs prior
 
 ctxDimension :: Batch -> Int
-ctxDimension Batch{ctxs} = cols ctxs
+ctxDimension Batch {ctxs} = cols ctxs
 
-posteriorMode :: Normal (Vector Double) -> Batch -> (Vector Double, Matrix Double)
+posteriorMode ::
+     Normal (Vector Double) -> Batch -> (Vector Double, Matrix Double)
 posteriorMode prior batch =
   minimizeVD VectorBFGS2 1E-2 10 0.1 1E-2 fn grad startingPoint
-  where fn = negate . (logPosterior prior batch)
-        grad = negate . (gradLogPosterior prior batch)
-        n = ctxDimension batch
+  where
+    fn = negate . (logPosterior prior batch)
+    grad = negate . (gradLogPosterior prior batch)
+    n = ctxDimension batch
   --      searchBox = fromList (take n $ repeat 1.0)
-        startingPoint = fromList (take n $ repeat 0.0)
+    startingPoint = fromList (take n $ repeat 0.0)
 
-
-posteriorCovariance prior@(Normal mean covariance) batch@Batch{..} =
+posteriorCovariance prior@(Normal mean covariance) batch@Batch {..} =
   let w = fst $ posteriorMode prior batch
-      activations = 1 / (1 + exp(-(ctxs #> w)))
+      activations = 1 / (1 + exp (-(ctxs #> w)))
       coeffs = activations * (1 - activations)
       ctxRows = toRows ctxs
   in undefined
@@ -134,17 +154,19 @@ randomBatch randomCtx w n = do
   points <- replicateM n (randomPoint randomCtx w)
   let ctxs = fromRows (fst <$> points)
   let targets = vector (snd <$> points)
-  pure $ Batch { targets = targets, ctxs = ctxs }
+  pure $ Batch {targets = targets, ctxs = ctxs}
 
-randomPoint :: RVar (Vector Double) -> Vector Double -> RVar (Vector Double, Double)
+randomPoint ::
+     RVar (Vector Double) -> Vector Double -> RVar (Vector Double, Double)
 randomPoint randomCtx w = do
   ctx <- randomCtx
-  let p = 1.0 / (1.0 + exp(-ctx <.> w))
+  let p = 1.0 / (1.0 + exp (-ctx <.> w))
   target <- bernoulli p
   pure (ctx, target)
 
 randomContext :: Int -> RVar (Vector Double)
-randomContext k = sample $ Normal (fromList $ take k $ repeat 0.0)  (sym $ ident k)
+randomContext k =
+  sample $ Normal (fromList $ take k $ repeat 0.0) (sym $ ident k)
 
 testPosteriorMode :: Vector Double -> Int -> RVar (Vector Double, Matrix Double)
 testPosteriorMode w n = do
@@ -161,9 +183,7 @@ test n = sample $ testPosteriorMode (vector [1.0, 2.0, 3.0, 4.0]) n
 --     fn = negate . logPosterior
 --     grad = negate . gradLogPosterior
 --     startingPoint = undefined
-
 h x = x
-
 
 testPlot path w n = do
   let k = 1
@@ -178,11 +198,24 @@ plotPosterior path prior batch = do
   -- let fn v = let [x] = toList v
   --            in x**2
   let points = r `zip` (fn . toVec <$> r)
+  toFile def path $ do plot $ (line "" $ [points])
+  where
+    toVec d = vector [d]
+
 --  putStrLn $ "POINTS: " ++ show (take 2 points)
-  toFile def path $ do
-    plot $ (line "" $ [points])
-  where toVec d = vector [d]
-
-
 range' :: Double -> Double -> Double -> [Double]
 range' start end step = takeWhile (< end) $ iterate (+ step) start
+
+-- | Compute the Laplace approximation to the posterior over the weights of the
+-- logistic regression model.
+approximatePosterior ::
+     Batch -> Normal (Vector Double) -> Normal (Vector Double)
+approximatePosterior batch@Batch {..} prior@(Normal mean covariance) =
+  let mean' = fst (posteriorMode prior batch)
+      precision = inv $ unSym covariance
+      ys = 1 / (1 + exp (-(ctxs #> mean)))
+      zs = ys * (1 - ys)
+      rows = toRows ctxs
+      comp n = (scalar (zs ! n)) * (outer (ctxs ! n) (ctxs ! n))
+      precision' = foldl (+) precision (comp `fmap` [0 .. (size ys) - 1])
+  in Normal mean' (sym $ inv precision')
