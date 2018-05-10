@@ -16,8 +16,7 @@ module Bandit.Bernoulli
    newMixedBandit,
    newBanditEpsilonGreedy,
    MixedBandit,
-   BernoulliBanditGreedy,
-   BernoulliBanditRandom,
+   BernoulliBanditGreedy, BernoulliBanditRandom,
    BernoulliBanditTS) where
 
 
