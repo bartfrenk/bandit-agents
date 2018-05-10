@@ -31,6 +31,8 @@ dependencies:
 - Chart
 - Chart-cairo
 
+ghc-options: -fwarn-unused-imports
+
 library:
   source-dirs: src
   dependencies:
