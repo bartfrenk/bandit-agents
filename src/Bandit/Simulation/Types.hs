@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 
@@ -12,8 +13,8 @@ import qualified Data.Random.Lift          as R
 import           Data.Sequence             (Seq)
 import qualified Data.Sequence             as Seq
 
-import           Bandit.Environments.Types
 import           Bandit.Agents.Types
+import           Bandit.Environments.Types
 
 newtype Log rew =
   Log (Seq (rew, rew))
@@ -21,8 +22,11 @@ newtype Log rew =
 
 type ExperimentT rew m a = WriterT (Log rew) (RVarT m) a
 
+type Simulation agent env ctx act rew
+   = (BanditAgent agent ctx act rew, Environment env ctx act rew)
+
 newExperiment ::
-     (Monad m, BanditAgent agent ctx act rew, Environment env ctx act rew)
+     (Monad m, Simulation agent env ctx act rew)
   => agent
   -> env
   -> Int

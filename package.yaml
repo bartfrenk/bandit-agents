@@ -30,8 +30,11 @@ dependencies:
 - containers
 - Chart
 - Chart-cairo
+- criterion # for benchmarking
+- deepseq
+- random
 
-ghc-options: -Wall
+ghc-options: -Wall -fno-warn-name-shadowing
 
 library:
   source-dirs: src
@@ -49,5 +52,13 @@ tests:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
+
+benchmarks:
+  hs-bandit-bench:
+    main: Main.hs
+    source-dirs: bench
     dependencies:
-      - hs-bandit
+      - criterion
+      - bandit-agents
+      - hmatrix
+      - deepseq

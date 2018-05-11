@@ -17,6 +17,7 @@ module Bandit.Agents.Bernoulli
   , BernoulliBanditGreedy
   , BernoulliBanditRandom
   , BernoulliBanditTS
+  , SequentialMean
   ) where
 
 import           Control.Monad

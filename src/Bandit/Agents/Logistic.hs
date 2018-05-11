@@ -1,6 +1,9 @@
+{-# LANGUAGE DeriveAnyClass        #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE StrictData            #-}
 
 module Bandit.Agents.Logistic where
 
@@ -18,7 +21,7 @@ import           Bandit.Utils
 newBanditTS :: Ord act => Int -> [act] -> LogisticBanditTS act
 newBanditTS k acts = LogisticBanditTS $ Map.fromList $ zip acts (repeat prior)
   where
-    prior = Normal (k |> repeat 0.0) (sym $ ident k)
+    prior = (Normal $! (k |> repeat 0.0)) $! (sym $ ident k)
 
 {- | Bandit agent for the setting where the reward for an action is a Bernoulli
 random variable whose expected value is the sigmoid of a linear combination of
@@ -36,7 +39,7 @@ the posterior). It approximates the posterior by its Laplace approximation, at
 each step.
 --}
 data LogisticBanditTS act = LogisticBanditTS
-  { prior :: Map act (Normal (Vector Double))
+  { prior :: !(Map act (Normal (Vector Double)))
   }
 
 instance Ord act => BanditAgent (LogisticBanditTS act) Ctx act Double where
@@ -47,6 +50,10 @@ instance Ord act => BanditAgent (LogisticBanditTS act) Ctx act Double where
   updateBelief ctx act rew (LogisticBanditTS prior) =
     let batch = Batch (vector [rew]) (asRow ctx)
     in LogisticBanditTS $ Map.adjust (approximatePosterior batch) act prior
+
+instance Ord act => BatchUpdateBelief (LogisticBanditTS act) (act, Batch) where
+  batchUpdateBelief (act, batch) (LogisticBanditTS prior) =
+    LogisticBanditTS $ Map.adjust (approximatePosterior batch) act prior
 
 type Ctx = Vector Double
 
@@ -107,13 +114,6 @@ posteriorMode prior batch =
   --      searchBox = fromList (take n $ repeat 1.0)
     startingPoint = fromList (take n $ repeat 0.0)
 
-posteriorCovariance prior@(Normal mean covariance) batch@Batch {..} =
-  let w = fst $ posteriorMode prior batch
-      activations = 1 / (1 + exp (-(ctxs #> w)))
-      coeffs = activations * (1 - activations)
-      ctxRows = toRows ctxs
-  in undefined
-
 -- | Compute the Laplace approximation to the posterior over the weights of the
 -- logistic regression model.
 approximatePosterior ::
@@ -123,7 +123,6 @@ approximatePosterior batch@Batch {..} prior@(Normal mean covariance) =
       precision = inv $ unSym covariance
       ys = 1 / (1 + exp (-(ctxs #> mean)))
       zs = ys * (1 - ys)
-      rows = toRows ctxs
       comp n = (scalar (zs ! n)) * (outer (ctxs ! n) (ctxs ! n))
       precision' = foldl (+) precision (comp `fmap` [0 .. (size ys) - 1])
-  in Normal mean' (sym $ inv precision')
+  in (Normal $! mean') $! (sym $ inv precision')
