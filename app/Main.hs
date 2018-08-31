@@ -52,4 +52,4 @@ main = do
   let summarizer = colwiseAverage
   gens <- replicateM (read samples) newPureMT
   let log = simulateManyPar logger summarizer (read rounds) env gens agent
-  plotLineToFile "plots/bernoulli.png" "<title>" log
+  plotLineToFile "docs/_img/bernoulli.png" "<title>" log
