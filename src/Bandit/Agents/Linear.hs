@@ -18,7 +18,7 @@ type Ctx = Vector Double
 
 type Prior actions = [(actions, Normal (Vector Double))]
 
-{- | Bandit agent in the environment where the expected reward is a linear
+{- |Bandit agent in the environment where the expected reward is a linear
 function of the context, and the errors are normally distributed with precision
 `beta`. The `prior` field maps actions to priors on the linear coefficients for
 the expected reward functions of these actions.

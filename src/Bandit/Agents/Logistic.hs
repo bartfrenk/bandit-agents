@@ -112,6 +112,7 @@ posteriorMode prior batch =
     grad = negate . (gradLogPosterior prior batch)
     n = cols $ ctxs batch
   --      searchBox = fromList (take n $ repeat 1.0)
+  -- seems to make more sense to take the mean of the prior
     startingPoint = fromList (take n $ repeat 0.0)
 
 -- | Compute the Laplace approximation to the posterior over the weights of the

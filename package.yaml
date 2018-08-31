@@ -11,6 +11,9 @@ default-extensions:
 - DeriveFunctor
 - RecordWildCards
 - NamedFieldPuns
+- LambdaCase
+- BangPatterns
+- FlexibleContexts
 
 extra-source-files:
 - README.md
@@ -33,6 +36,11 @@ dependencies:
 - criterion # for benchmarking
 - deepseq
 - random
+- monad-par
+- abstract-par
+- timeit
+- conduit
+- mersenne-random-pure64
 
 ghc-options: -Wall -fno-warn-name-shadowing
 
@@ -43,6 +51,20 @@ library:
     - hmatrix
     - hmatrix-gsl
     - mtl
+
+executables:
+  hs-bandit:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -O2
+    dependencies:
+    - bandit-agents
+
+
 
 tests:
   hs-bandit-test:

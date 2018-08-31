@@ -75,7 +75,14 @@ plotLogisticAgent samples trials = do
     path = "logistic-" ++ show samples ++ "-" ++ show trials ++ ".png"
 
 plotBernoulliAgent :: Int -> Int -> IO ()
-plotBernoulliAgent samples trials = do
-  plotAveragePerPeriodRegret samples path (bernoulliExperiment trials)
+plotBernoulliAgent samples rounds = do
+  plotAveragePerPeriodRegret samples path (bernoulliExperiment rounds)
   where
-    path = "bernoulli-" ++ show samples ++ "-" ++ show trials ++ ".png"
+    path = "bernoulli-" ++ show samples ++ "-" ++ show rounds ++ ".png"
+
+plotBernoulliAgentPar :: Int -> Int -> IO ()
+plotBernoulliAgentPar samples rounds = do
+  plotAveragePerPeriodRegretPar samples path (bernoulliExperiment rounds)
+  where
+    path = "bernoulli-" ++ show samples ++ "-" ++ show rounds ++ ".png"
+

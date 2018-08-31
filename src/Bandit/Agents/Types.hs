@@ -12,7 +12,3 @@ class BanditAgent agent ctx act rew | agent -> act ctx rew where
 
 class BatchUpdateBelief agent batch where
   batchUpdateBelief :: batch -> agent -> agent
-
-class SequentialEstimator estimator est obs | estimator -> est obs where
-  estimate :: estimator -> est
-  updateEstimate :: obs -> estimator -> estimator

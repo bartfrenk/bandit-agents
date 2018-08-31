@@ -7,17 +7,14 @@
 {-# LANGUAGE TypeFamilies              #-}
 
 module Bandit.Agents.Bernoulli
-  ( newSequentialMean
-  , newBanditTS
+  ( newBanditTS
   , newBanditNI
   , newBanditGreedy
   , newBanditRandom
   , newBanditEpsilonGreedy
-  , MixedBandit
   , BernoulliBanditGreedy
   , BernoulliBanditRandom
   , BernoulliBanditTS
-  , SequentialMean
   ) where
 
 import           Control.Monad
@@ -27,6 +24,7 @@ import qualified Data.Random.Distribution.Beta as D
 import           Bandit.Agents.Combinators
 import           Bandit.Agents.Types
 import           Bandit.Utils                  (selectMax)
+import           Estimators
 
 data BernoulliBanditRandom action =
   BernoulliBanditRandom [action]
@@ -60,21 +58,6 @@ newBanditGreedy actions =
     then error "BernoulliBanditGreedy: actions need to be unique"
     else BernoulliBanditGreedy $ zip actions $ repeat newSequentialMean
 
--- TODO: would be interesting to examine the effect of unboxing the parameters
-data SequentialMean =
-  SequentialMean Int
-                 Double
-  deriving (Show)
-
-instance SequentialEstimator SequentialMean Double Double where
-  estimate (SequentialMean _ mean) = mean
-  updateEstimate v (SequentialMean n mean) =
-    let n' = n + 1
-    in SequentialMean n' (mean + (v - mean) / fromIntegral n')
-
-newSequentialMean :: SequentialMean
-newSequentialMean = SequentialMean 0 0.0
-
 selectActionGreedy :: Eq action => [(action, SequentialMean)] -> RVar action
 selectActionGreedy = selectMax . fmap estimateMean
   where
@@ -95,7 +78,7 @@ updateAgentGreedy action reward means = updateMeans action reward `fmap` means
 
 -- |Agent for a Bernoulli bandit problem that selects actions by Thompson sampling.
 data BernoulliBanditTS action =
-  BernoulliBanditTS [(action, D.Beta Double)]
+  BernoulliBanditTS ![(action, D.Beta Double)]
 
 instance Show act => Show (BernoulliBanditTS act) where
   show (BernoulliBanditTS prior) = show $ f `fmap` prior
@@ -129,8 +112,9 @@ updateAgentTS action reward prior = updateMarginal action reward `fmap` prior
       if selected == a
         then ( selected
              , if r == 1.0
-                 then D.Beta (alpha + 1.0) beta
-                 else D.Beta alpha (beta + 1.0))
+                  -- Work around the non-strictness of the D.Beta data constructor
+                 then let !alpha' = alpha + 1.0 in D.Beta alpha' beta
+                 else let !beta' = beta + 1.0 in D.Beta alpha beta' )
         else (a, marginal)
 
 -- |Creates a new Bernoulli Bandit from a conjugate prior. Fails with an error

@@ -89,3 +89,8 @@ Cons:
 Pros:
 - Can keep the BanditAgent class a conceptual whole
 - Can have multiple formats for the batches to update the agent's belief with.
+** References
+Useful Stack Overflow answer to get started with profiling using Haskell Stack:
+https://stackoverflow.com/questions/32123475/profiling-builds-with-stack
+
+ThreadScope: https://wiki.haskell.org/ThreadScope

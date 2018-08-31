@@ -1,12 +1,17 @@
 module Bandit.Simulation.Reports where
 
+import           Control.Monad.Par                      (NFData, runPar)
 import           Data.Foldable                          (toList)
 import           Data.Sequence                          (Seq)
 import qualified Data.Sequence                          as Seq
 import           Graphics.Rendering.Chart.Backend.Cairo
 import           Graphics.Rendering.Chart.Easy
+import Control.Monad.State
+
+import System.Random
 
 import           Bandit.Simulation.Types
+
 
 averagePerPeriodRegret :: (Num rew, Fractional rew) => [Log rew] -> Seq rew
 averagePerPeriodRegret [] = error "no logs"
@@ -36,6 +41,19 @@ plotAveragePerPeriodRegret samples path experiment = do
   where
     title = "Average per period regret (" ++ show samples ++ " samples)"
 
+plotAveragePerPeriodRegretPar ::
+     (PlotValue rew, Num rew, Fractional rew, NFData rew)
+  => Int
+  -> String
+  -> ExperimentT rew (State StdGen) agent
+  -> IO ()
+plotAveragePerPeriodRegretPar samples path experiment = do
+  gen <- newStdGen
+  let logs = runPar $ runManyPure gen samples experiment
+  plotSequence path title $ averagePerPeriodRegret logs
+  where
+    title = "Average per period regret (" ++ show samples ++ " samples)"
+
 cumulativeRegret :: Num rew => Log rew -> Seq rew
 cumulativeRegret = Seq.scanl (+) 0 . perPeriodRegret
 
@@ -48,4 +66,3 @@ averageRegret k log =
 
 perPeriodRegret :: Num rew => Log rew -> Seq rew
 perPeriodRegret (Log seq) = uncurry (-) `fmap` seq
-

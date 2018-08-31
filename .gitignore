@@ -5,3 +5,5 @@ bandit-agents.cabal
 docs/project.pdf
 docs/project.tex
 docs/_img
+*.eventlog
+*.prof

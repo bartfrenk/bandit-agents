@@ -41,6 +41,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - random-fu-multivariate-0.1.2.0
+- extra-1.6.9
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
