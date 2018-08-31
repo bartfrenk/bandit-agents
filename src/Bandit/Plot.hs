@@ -1,4 +1,4 @@
-module Bandit.Experimentation.Plot
+module Bandit.Plot
   ( sinkToLinePlot
   , plotLineToFile
   , PlotValue

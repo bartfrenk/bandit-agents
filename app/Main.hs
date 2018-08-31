@@ -4,8 +4,8 @@ import           System.Random.Mersenne.Pure64
 
 import           Bandit.Agents.Bernoulli        (newBanditNI)
 import           Bandit.Environments.Bernoulli  (newBernoulliEnv)
-import           Bandit.Experimentation.Plot
-import           Bandit.Experimentation.Scratch
+import           Bandit.Plot
+import           Bandit.Simulation
 
 data Action
   = A
