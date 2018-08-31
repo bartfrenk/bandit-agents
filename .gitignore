@@ -7,3 +7,4 @@ docs/project.tex
 docs/_img
 *.eventlog
 *.prof
+/plots/
