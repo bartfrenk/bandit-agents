@@ -1,10 +1,3 @@
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards       #-}
-{-# LANGUAGE StrictData            #-}
-
 module Bandit.Agents.Logistic where
 
 import           Data.Map.Strict                             (Map)
@@ -92,8 +85,8 @@ gradLogPosterior' targets ctxs (Normal mean covariance) w =
   in loss + regularizer
 
 data Batch = Batch
-  { targets :: Vector Double
-  , ctxs    :: Matrix Double
+  { targets :: !(Vector Double)
+  , ctxs    :: !(Matrix Double)
   } deriving (Show)
 
 logPosterior :: Normal (Vector Double) -> Batch -> Vector Double -> Double

@@ -1,6 +1,4 @@
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE FlexibleInstances         #-}
-{-# LANGUAGE MultiParamTypeClasses     #-}
 
 module Bandit.Agents.Combinators where
 
@@ -9,8 +7,10 @@ import qualified Data.Random.Distribution.Bernoulli as D
 import           Bandit.Agents.Types
 
 data MixedBandit ctx act rew =
-  forall b a. (BanditAgent a ctx act rew, BanditAgent b ctx act rew) =>
-              MixedBandit Double a b
+  forall a b. (BanditAgent a ctx act rew, BanditAgent b ctx act rew) =>
+              MixedBandit !Double
+                          !a
+                          !b
 
 instance Eq act => BanditAgent (MixedBandit ctx act rew) ctx act rew where
   selectAction (MixedBandit p a b) ctx = do

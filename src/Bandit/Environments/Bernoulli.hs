@@ -1,6 +1,3 @@
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Bandit.Environments.Bernoulli where
 
 import           Data.Map.Strict                    (Map, (!), (!?))

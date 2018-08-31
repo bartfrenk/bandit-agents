@@ -1,9 +1,3 @@
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns        #-}
-{-# LANGUAGE RecordWildCards       #-}
-
 module Bandit.Agents.Linear where
 
 import           Control.Monad
@@ -24,13 +18,12 @@ function of the context, and the errors are normally distributed with precision
 the expected reward functions of these actions.
 -}
 data LinearCtxBanditTS actions = LinearCtxBanditTS
-  { beta  :: Double
-  , prior :: Prior actions
+  { beta  :: !Double
+  , prior :: !(Prior actions)
   }
 
 instance Eq act => BanditAgent (LinearCtxBanditTS act) Ctx act Double where
-  selectAction LinearCtxBanditTS {prior} ctx =
-    selectActionFromCtxTS prior ctx
+  selectAction LinearCtxBanditTS {prior} ctx = selectActionFromCtxTS prior ctx
   updateBelief ctx act reward LinearCtxBanditTS {..} =
     LinearCtxBanditTS beta $ updateAgentWithCtxTS beta ctx act reward prior
 
@@ -42,7 +35,6 @@ selectActionFromCtxTS prior ctx = do
     sampleScores (action, dist) = do
       weights <- rvar dist
       pure (action, ctx <.> weights)
-
 
 {- |
 Update the belief of the agent, with a (context, action, reward) triple. Since

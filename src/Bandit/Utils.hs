@@ -14,7 +14,6 @@ keepMax (selected, maxScore) (action, score) =
 selectMax :: Ord b => [(a, b)] -> RVar a
 selectMax scores = pure $ fst $ foldl1 keepMax scores
 
-
 selectMaxMap :: Ord b => Map a b -> RVar a
 selectMaxMap = selectMax . Map.toList
 

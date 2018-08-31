@@ -1,7 +1,3 @@
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns        #-}
-
 module Bandit.Environments.Logistic where
 
 import           Data.Map.Strict                             (Map, (!), (!?))

@@ -95,10 +95,7 @@ simulateManyPure logger summarizer env gens agent =
   (\gen -> simulatePure logger env gen agent) `fmap` gens & summarizer
 
 simulateManyPar ::
-     ( BanditAgent agent ctx act rew
-     , Environment env ctx act rew
-     , NFData line
-     )
+     (BanditAgent agent ctx act rew, Environment env ctx act rew, NFData line)
   => Logger agent ctx act rew line
   -> Summarizer line summary
   -> Int -- ^ The number of rounds in each simulation

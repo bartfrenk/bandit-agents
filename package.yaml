@@ -14,6 +14,9 @@ default-extensions:
 - LambdaCase
 - BangPatterns
 - FlexibleContexts
+- FlexibleInstances
+- MultiParamTypeClasses
+
 
 extra-source-files:
 - README.md
@@ -29,16 +32,11 @@ description: >-
 dependencies:
 - base >= 4.7 && < 5
 - random-fu
-- random-source # only to be able to run tests in the REPL
 - containers
 - Chart
 - Chart-cairo
-- criterion # for benchmarking
-- deepseq
 - random
 - monad-par
-- abstract-par
-- timeit
 - conduit
 - mersenne-random-pure64
 
@@ -53,7 +51,7 @@ library:
     - mtl
 
 executables:
-  hs-bandit:
+  simulate:
     main: Main.hs
     source-dirs: app
     ghc-options:
@@ -63,8 +61,6 @@ executables:
     - -O2
     dependencies:
     - bandit-agents
-
-
 
 tests:
   hs-bandit-test:

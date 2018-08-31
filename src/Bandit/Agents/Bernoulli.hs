@@ -1,11 +1,3 @@
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE FlexibleContexts          #-}
-{-# LANGUAGE FlexibleInstances         #-}
-{-# LANGUAGE FunctionalDependencies    #-}
-{-# LANGUAGE MultiParamTypeClasses     #-}
-{-# LANGUAGE StrictData                #-}
-{-# LANGUAGE TypeFamilies              #-}
-
 module Bandit.Agents.Bernoulli
   ( newBanditTS
   , newBanditNI
@@ -27,7 +19,7 @@ import           Bandit.Utils                  (selectMax)
 import           Estimators
 
 data BernoulliBanditRandom action =
-  BernoulliBanditRandom [action]
+  BernoulliBanditRandom ![action]
 
 newBanditEpsilonGreedy :: Eq act => Double -> [act] -> MixedBandit () act Double
 newBanditEpsilonGreedy p actions =
@@ -44,7 +36,7 @@ instance Eq act => BanditAgent (BernoulliBanditRandom act) () act Double where
   updateBelief _ctx _act _rew agent = agent
 
 data BernoulliBanditGreedy action =
-  BernoulliBanditGreedy [(action, SequentialMean)]
+  BernoulliBanditGreedy ![(action, SequentialMean)]
   deriving (Show)
 
 instance Eq act => BanditAgent (BernoulliBanditGreedy act) () act Double where
@@ -113,8 +105,10 @@ updateAgentTS action reward prior = updateMarginal action reward `fmap` prior
         then ( selected
              , if r == 1.0
                   -- Work around the non-strictness of the D.Beta data constructor
-                 then let !alpha' = alpha + 1.0 in D.Beta alpha' beta
-                 else let !beta' = beta + 1.0 in D.Beta alpha beta' )
+                 then let !alpha' = alpha + 1.0
+                      in D.Beta alpha' beta
+                 else let !beta' = beta + 1.0
+                      in D.Beta alpha beta')
         else (a, marginal)
 
 -- |Creates a new Bernoulli Bandit from a conjugate prior. Fails with an error
