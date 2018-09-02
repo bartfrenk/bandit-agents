@@ -94,3 +94,8 @@ Useful Stack Overflow answer to get started with profiling using Haskell Stack:
 https://stackoverflow.com/questions/32123475/profiling-builds-with-stack
 
 ThreadScope: https://wiki.haskell.org/ThreadScope
+
+Deserializing existential types
+https://stackoverflow.com/questions/18039005/deserializing-an-existential-data-type
+
+(conclusion, we need a dictionary of types, that probably means fixing act)
