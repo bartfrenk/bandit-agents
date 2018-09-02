@@ -9,14 +9,15 @@ module Bandit.Agents.Bernoulli
   , BernoulliBanditTS
   ) where
 
-import           Control.Monad
-import           Data.Random
+import Control.Monad
+import Data.Random
 import qualified Data.Random.Distribution.Beta as D
+import Data.Yaml
 
-import           Bandit.Agents.Combinators
-import           Bandit.Agents.Types
-import           Bandit.Utils                  (selectMax)
-import           Estimators
+import Bandit.Agents.Combinators
+import Bandit.Agents.Types
+import Bandit.Utils (selectMax)
+import Estimators
 
 data BernoulliBanditRandom action =
   BernoulliBanditRandom ![action]
@@ -71,6 +72,9 @@ updateAgentGreedy action reward means = updateMeans action reward `fmap` means
 -- |Agent for a Bernoulli bandit problem that selects actions by Thompson sampling.
 data BernoulliBanditTS action =
   BernoulliBanditTS ![(action, D.Beta Double)]
+
+instance FromJSON act => FromJSON (BernoulliBanditTS act) where
+  parseJSON = withObject "BernoulliBanditTS" $ \obj -> undefined -- write this later
 
 instance Show act => Show (BernoulliBanditTS act) where
   show (BernoulliBanditTS prior) = show $ f `fmap` prior

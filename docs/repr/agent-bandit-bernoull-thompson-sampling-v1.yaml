@@ -1,0 +1,15 @@
+meta:
+  schema: urn:bandit:schema:agent:bernoulli:thompson-sampling:v1
+  prior: &anchor
+    family: beta
+    parameters:
+      alpha: 0.0
+      beta: 0.0
+data:
+  actions:
+    - id: A
+      prior: *prior
+    - id: B
+      prior: *prior
+    - id:
+      prior: *prior

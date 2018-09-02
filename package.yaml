@@ -16,6 +16,7 @@ default-extensions:
 - FlexibleContexts
 - FlexibleInstances
 - MultiParamTypeClasses
+- DeriveGeneric
 
 
 extra-source-files:
@@ -39,6 +40,7 @@ dependencies:
 - monad-par
 - conduit
 - mersenne-random-pure64
+- aeson
 
 ghc-options: -Wall -fno-warn-name-shadowing
 
@@ -49,6 +51,9 @@ library:
     - hmatrix
     - hmatrix-gsl
     - mtl
+
+    - yaml
+    - bytestring
 
 executables:
   simulate:
