@@ -1,10 +1,6 @@
 {-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-module Bandit.Experimentation.Serialization where
+module Bandit.Agents.Serialization where
 
-import           Data.ByteString
-import           Data.Dynamic
-import           Data.Typeable
 import           Data.Yaml
 import           GHC.Generics
 
@@ -26,6 +22,6 @@ instance FromJSON d => FromJSON (WithMeta d) where
     withObject "WithMeta" $ \obj -> WithMeta <$> obj .: "meta" <*> obj .: "data"
 
 -- |Function to run on a generic agent.
-type RunAgent ctx act rew summary
+type RunAgent ctx act rew result
    = (forall agent. BanditAgent agent ctx act rew =>
-                      agent -> summary)
+                      agent -> result)

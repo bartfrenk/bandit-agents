@@ -157,3 +157,4 @@ language_extensions:
   - MultiParamTypeClasses
   - BangPatterns
   - LambdaCase
+  - FlexibleContexts

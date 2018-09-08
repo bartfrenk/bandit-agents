@@ -1,56 +1,68 @@
 module Bandit.Agents.Bernoulli
-  ( newBanditTS
-  , newBanditNI
-  , newBanditGreedy
-  , newBanditRandom
-  , newBanditEpsilonGreedy
-  , BernoulliBanditGreedy
-  , BernoulliBanditRandom
-  , BernoulliBanditTS
+  ( newGreedyAgent
+  , newThompsonAgent
+  , newThompsonAgentNI
+  , newRandomAgent
+  , GreedyAgent
+  , RandomAgent
+  , ThompsonAgent
   ) where
 
-import Control.Monad
-import Data.Random
+import           Control.Monad
+import           Data.Random
 import qualified Data.Random.Distribution.Beta as D
-import Data.Yaml
-import qualified Data.Vector as V
+import qualified Data.Vector                   as V
+import           Data.Yaml
 
-import Bandit.Agents.Combinators
-import Bandit.Agents.Types
-import Bandit.Utils (selectMax)
-import Estimators
+import           Bandit.Agents.Types
+import           Bandit.Utils                  (selectMax)
+import           Estimators
 
-data BernoulliBanditRandom action =
-  BernoulliBanditRandom ![action]
 
-newBanditEpsilonGreedy :: Eq act => Double -> [act] -> MixedBandit () act Double
-newBanditEpsilonGreedy p actions =
-  newMixedAgent p (newBanditRandom actions) (newBanditGreedy actions)
-
-newBanditRandom :: Eq action => [action] -> BernoulliBanditRandom action
-newBanditRandom actions =
+-- |Creates a new agent that selects an action uniformly at random.
+newRandomAgent :: Eq action => [action] -> RandomAgent action
+newRandomAgent actions =
   if hasDuplicates actions
-    then error "BernoulliBanditRandom: actions need to be unique"
-    else BernoulliBanditRandom actions
+    then error "RandomAgent: actions need to be unique"
+    else RandomAgent actions
 
-instance Eq act => BanditAgent (BernoulliBanditRandom act) () act Double where
-  selectAction (BernoulliBanditRandom acts) _ctx = randomElement acts
+-- |Creates a new agent that keeps a point estimate of the expected reward, and
+-- selects the action with the highest point estimate.
+newGreedyAgent :: Eq action => [action] -> GreedyAgent action
+newGreedyAgent actions =
+  if hasDuplicates actions
+    then error "GreedyAgent: actions need to be unique"
+    else GreedyAgent $ zip actions $ repeat newSequentialMean
+
+-- |Creates an agent that selects an action by Thompson sampling. The prior
+-- belief about the expected reward of each action is encoded in the `prior`
+-- parameter.
+newThompsonAgent ::
+     Eq action => [(action, D.Beta Double)] -> ThompsonAgent action
+newThompsonAgent prior =
+  if hasDuplicates (fst `fmap` prior)
+    then error "ThompsonAgent: actions need to be unique"
+    else ThompsonAgent prior
+
+-- |Like `newBanditTS`, but starting with a uniform (non-informative) prior.
+newThompsonAgentNI :: Eq action => [action] -> ThompsonAgent action
+newThompsonAgentNI acts = newThompsonAgent $ zip acts (repeat $ D.Beta 1.0 1.0)
+
+data RandomAgent action =
+  RandomAgent ![action]
+
+instance Eq act => BanditAgent (RandomAgent act) () act Double where
+  selectAction (RandomAgent acts) _ctx = randomElement acts
   updateBelief _ctx _act _rew agent = agent
 
-data BernoulliBanditGreedy action =
-  BernoulliBanditGreedy ![(action, SequentialMean)]
+data GreedyAgent action =
+  GreedyAgent ![(action, SequentialMean)]
   deriving (Show)
 
-instance Eq act => BanditAgent (BernoulliBanditGreedy act) () act Double where
-  selectAction (BernoulliBanditGreedy means) _ctx = selectActionGreedy means
-  updateBelief _ctx act rew (BernoulliBanditGreedy means) =
-    BernoulliBanditGreedy $ updateAgentGreedy act rew means
-
-newBanditGreedy :: Eq action => [action] -> BernoulliBanditGreedy action
-newBanditGreedy actions =
-  if hasDuplicates actions
-    then error "BernoulliBanditGreedy: actions need to be unique"
-    else BernoulliBanditGreedy $ zip actions $ repeat newSequentialMean
+instance Eq act => BanditAgent (GreedyAgent act) () act Double where
+  selectAction (GreedyAgent means) _ctx = selectActionGreedy means
+  updateBelief _ctx act rew (GreedyAgent means) =
+    GreedyAgent $ updateAgentGreedy act rew means
 
 selectActionGreedy :: Eq action => [(action, SequentialMean)] -> RVar action
 selectActionGreedy = selectMax . fmap estimateMean
@@ -71,12 +83,12 @@ updateAgentGreedy action reward means = updateMeans action reward `fmap` means
         else (a, mean)
 
 -- |Agent for a Bernoulli bandit problem that selects actions by Thompson sampling.
-data BernoulliBanditTS action =
-  BernoulliBanditTS ![(action, D.Beta Double)]
+data ThompsonAgent action =
+  ThompsonAgent ![(action, D.Beta Double)]
 
-instance FromJSON act => FromJSON (BernoulliBanditTS act) where
-  parseJSON = withArray "BernoulliBanditTS" $ \arr ->
-    BernoulliBanditTS . V.toList <$> forM arr parseAction
+instance FromJSON act => FromJSON (ThompsonAgent act) where
+  parseJSON = withArray "ThompsonAgent" $ \arr ->
+    ThompsonAgent . V.toList <$> forM arr parseAction
 
     where parseAction = withObject "Action" $ \obj -> (,)
             <$> obj .: "action"
@@ -85,15 +97,15 @@ instance FromJSON act => FromJSON (BernoulliBanditTS act) where
             <$> obj .: "alpha"
             <*> obj .: "beta"
 
-instance Show act => Show (BernoulliBanditTS act) where
-  show (BernoulliBanditTS prior) = show $ f `fmap` prior
+instance Show act => Show (ThompsonAgent act) where
+  show (ThompsonAgent prior) = show $ f `fmap` prior
     where
       f (action, (D.Beta a b)) = (action, (a, b))
 
-instance Eq act => BanditAgent (BernoulliBanditTS act) () act Double where
-  selectAction (BernoulliBanditTS prior) _ctx = selectActionTS prior
-  updateBelief _ctx act rew (BernoulliBanditTS prior) =
-    BernoulliBanditTS $ updateAgentTS act rew prior
+instance Eq act => BanditAgent (ThompsonAgent act) () act Double where
+  selectAction (ThompsonAgent prior) _ctx = selectActionTS prior
+  updateBelief _ctx act rew (ThompsonAgent prior) =
+    ThompsonAgent $ updateAgentTS act rew prior
 
 selectActionTS ::
      (Ord v, Distribution D.Beta v) => [(action, D.Beta v)] -> RVar action
@@ -123,20 +135,6 @@ updateAgentTS action reward prior = updateMarginal action reward `fmap` prior
                  else let !beta' = beta + 1.0
                       in D.Beta alpha beta')
         else (a, marginal)
-
--- |Creates a new Bernoulli Bandit from a conjugate prior. Fails with an error
--- if the actions in the prior have duplicates.
-newBanditTS ::
-     Eq action => [(action, D.Beta Double)] -> BernoulliBanditTS action
-newBanditTS prior =
-  if hasDuplicates (fst `fmap` prior)
-    then error "BernoulliBanditTS: actions need to be unique"
-    else BernoulliBanditTS prior
-
--- |Creates a new Bernoulli Bandit from a set of actions. The priors are
--- non-informative Beta distributions.
-newBanditNI :: Eq action => [action] -> BernoulliBanditTS action
-newBanditNI acts = newBanditTS $ zip acts (repeat $ D.Beta 1.0 1.0)
 
 -- |Returns whether the list contains duplicates. Note that the complexity is
 -- quadratic in the length of the list. This is due to the fact that we do not

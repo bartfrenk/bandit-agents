@@ -66,6 +66,8 @@ executables:
     - -O2
     dependencies:
     - bandit-agents
+    - optparse-applicative
+    - yaml
 
 tests:
   hs-bandit-test:
