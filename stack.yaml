@@ -40,8 +40,8 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- git: git@github.com:idontgetoutmuch/random-fu-multivariate.git
-  commit: 098bc58a453e1e20c7c40e1b9e9c19c6c65fac54
+- git: git@github.com:bartfrenk/random-fu-multivariate.git
+  commit: 4a80661e9f3b545df70d6114a77048c655b6aa8b
 - extra-1.6.9
 - Chart-1.9
 - Chart-cairo-1.9
