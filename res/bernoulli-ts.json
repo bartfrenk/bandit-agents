@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "schema": "urn:bandit:schema:agent:bernoulli:thompson-sampling:v1"
+  },
+  "data": [
+    {
+      "action": "A",
+      "prior": {
+        "alpha": 1,
+        "beta": 1
+      }
+    },
+    {
+      "action": "B",
+      "prior": {
+        "alpha": 1,
+        "beta": 1
+      }
+    },
+    {
+      "action": "C",
+      "prior": {
+        "alpha": 1,
+        "beta": 1
+      }
+    }
+  ]
+}

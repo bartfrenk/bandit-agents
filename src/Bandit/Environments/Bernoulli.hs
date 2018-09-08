@@ -11,7 +11,7 @@ newBernoulliEnv = BernoulliEnv . Map.fromList
 
 data BernoulliEnv act = BernoulliEnv
   { expectedRewards :: Map act Double
-  }
+  } deriving (Eq, Show)
 
 instance Ord act => Environment (BernoulliEnv act) () act Double where
   generateReward (BernoulliEnv ps) _ctx act = bernoulli <$> ps !? act
