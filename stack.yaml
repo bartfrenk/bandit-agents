@@ -15,7 +15,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-resolver: lts-11.5
+resolver: lts-12.9
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -40,8 +40,11 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- random-fu-multivariate-0.1.2.0
+- git: git@github.com:idontgetoutmuch/random-fu-multivariate.git
+  commit: 098bc58a453e1e20c7c40e1b9e9c19c6c65fac54
 - extra-1.6.9
+- Chart-1.9
+- Chart-cairo-1.9
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
