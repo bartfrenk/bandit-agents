@@ -156,3 +156,4 @@ language_extensions:
   - NamedFieldPuns
   - MultiParamTypeClasses
   - BangPatterns
+  - LambdaCase
