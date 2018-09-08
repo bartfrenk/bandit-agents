@@ -41,6 +41,7 @@ dependencies:
 - conduit
 - mersenne-random-pure64
 - aeson
+- mtl
 
 ghc-options: -Wall -fno-warn-name-shadowing
 
@@ -50,10 +51,9 @@ library:
     - random-fu-multivariate
     - hmatrix
     - hmatrix-gsl
-    - mtl
-
     - yaml
     - bytestring
+    - vector
 
 executables:
   simulate:

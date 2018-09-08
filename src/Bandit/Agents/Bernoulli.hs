@@ -13,6 +13,7 @@ import Control.Monad
 import Data.Random
 import qualified Data.Random.Distribution.Beta as D
 import Data.Yaml
+import qualified Data.Vector as V
 
 import Bandit.Agents.Combinators
 import Bandit.Agents.Types
@@ -74,7 +75,15 @@ data BernoulliBanditTS action =
   BernoulliBanditTS ![(action, D.Beta Double)]
 
 instance FromJSON act => FromJSON (BernoulliBanditTS act) where
-  parseJSON = withObject "BernoulliBanditTS" $ \obj -> undefined -- write this later
+  parseJSON = withArray "BernoulliBanditTS" $ \arr ->
+    BernoulliBanditTS . V.toList <$> forM arr parseAction
+
+    where parseAction = withObject "Action" $ \obj -> (,)
+            <$> obj .: "action"
+            <*> (obj .: "prior" >>= parseBeta)
+          parseBeta = withObject "Beta" $ \obj -> D.Beta
+            <$> obj .: "alpha"
+            <*> obj .: "beta"
 
 instance Show act => Show (BernoulliBanditTS act) where
   show (BernoulliBanditTS prior) = show $ f `fmap` prior

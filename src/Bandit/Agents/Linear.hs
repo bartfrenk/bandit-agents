@@ -39,7 +39,7 @@ selectActionFromCtxTS prior ctx = do
 {- |
 Update the belief of the agent, with a (context, action, reward) triple. Since
 the belief is modeled by a conjugate prior (a joint Gaussian distribution on the
-weights), the updating is simple. See for example [Bishop, Section 3.4].
+weights), the updating is simple. See, for example [Bishop, Section 3.4].
 -}
 updateAgentWithCtxTS ::
      Eq act => Double -> Ctx -> act -> Double -> Prior act -> Prior act
