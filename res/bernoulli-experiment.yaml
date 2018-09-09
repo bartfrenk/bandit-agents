@@ -1,0 +1,21 @@
+agents:
+  - meta:
+      schema: "urn:bandit:schema:agent:bernoulli:thompson:v1"
+      label: "Thompson sampling with non-informative prior"
+    data:
+      - action: "A"
+        prior:
+          alpha: 1
+          beta: 1
+      - action: "B"
+        prior:
+          alpha: 1
+          beta: 1
+      - action: "C"
+        prior:
+          alpha: 1
+          beta: 1
+  - meta:
+      schema: "urn:bandit:schema:agent:bernoulli:greedy:v1"
+      label: "Greedy"
+    data: ["A", "B", "C"]

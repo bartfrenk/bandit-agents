@@ -59,6 +59,10 @@ data GreedyAgent action =
   GreedyAgent ![(action, SequentialMean)]
   deriving (Show)
 
+instance (Eq action, FromJSON action) => FromJSON (GreedyAgent action) where
+  parseJSON = withArray "GreedyAgent" $ \arr ->
+    newGreedyAgent <$> (traverse parseJSON $ V.toList arr)
+
 instance Eq act => BanditAgent (GreedyAgent act) () act Double where
   selectAction (GreedyAgent means) _ctx = selectActionGreedy means
   updateBelief _ctx act rew (GreedyAgent means) =

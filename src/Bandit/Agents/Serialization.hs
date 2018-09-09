@@ -8,14 +8,24 @@ import           Bandit.Agents.Types
 
 data Metadata = Metadata
   { schema :: String
-  } deriving (Generic)
+  , label :: String
+  } deriving (Eq, Show, Generic)
 
 instance FromJSON Metadata
 
 data WithMeta d = WithMeta
   { _meta :: !Metadata
   , _data :: !d
-  }
+  } deriving (Eq, Show, Generic)
+
+-- |Data type used to serialize simulation of multiple agents in the same
+-- environment.
+data Experiment = Experiment
+  { agents :: [WithMeta Value]
+  } deriving (Eq, Show, Generic)
+
+instance FromJSON Experiment
+
 
 instance FromJSON d => FromJSON (WithMeta d) where
   parseJSON =
